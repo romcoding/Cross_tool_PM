@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from './ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Checkbox } from './ui/checkbox'
+import { Calendar } from './ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
+import { api } from '../utils/api'
 
 const STEPS = [
   { id: 'details', title: 'Project Details', description: 'Basic project information' },
@@ -68,8 +69,7 @@ export default function ProjectWizard() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users')
-      const data = await response.json()
+      const data = await api.getUsers()
       setUsers(data)
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -115,54 +115,44 @@ export default function ProjectWizard() {
 
   const submitProject = async () => {
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          start_date: formData.start_date?.toISOString().split('T')[0],
-          end_date: formData.end_date?.toISOString().split('T')[0],
-          budget: formData.budget ? parseFloat(formData.budget) : null
-        }),
-      })
-      
-      if (response.ok) {
-        const project = await response.json()
-        alert('Project created successfully!')
-        // Reset form or redirect
-        setFormData({
-          name: '',
-          key: '',
-          project_type: '',
-          project_lead_id: '',
-          description: '',
-          start_date: null,
-          end_date: null,
-          budget: '',
-          currency: 'USD',
-          team_members: [],
-          steering_meeting_enabled: false,
-          steering_meeting_frequency: '',
-          steering_meeting_day: '',
-          steering_meeting_time: '',
-          pm_meeting_enabled: false,
-          pm_meeting_frequency: '',
-          pm_meeting_day: '',
-          pm_meeting_time: '',
-          jira_instance_url: '',
-          jira_api_token: '',
-          confluence_instance_url: '',
-          confluence_api_token: '',
-          productive_organization_id: '',
-          productive_api_token: ''
-        })
-        setCurrentStep(0)
-      } else {
-        const error = await response.json()
-        alert(`Error: ${error.error}`)
+      const projectData = {
+        ...formData,
+        start_date: formData.start_date?.toISOString().split('T')[0],
+        end_date: formData.end_date?.toISOString().split('T')[0],
+        budget: formData.budget ? parseFloat(formData.budget) : null
       }
+      
+      const project = await api.createProject(projectData)
+      alert('Project created successfully!')
+      
+      // Reset form
+      setFormData({
+        name: '',
+        key: '',
+        project_type: '',
+        project_lead_id: '',
+        description: '',
+        start_date: null,
+        end_date: null,
+        budget: '',
+        currency: 'USD',
+        team_members: [],
+        steering_meeting_enabled: false,
+        steering_meeting_frequency: '',
+        steering_meeting_day: '',
+        steering_meeting_time: '',
+        pm_meeting_enabled: false,
+        pm_meeting_frequency: '',
+        pm_meeting_day: '',
+        pm_meeting_time: '',
+        jira_instance_url: '',
+        jira_api_token: '',
+        confluence_instance_url: '',
+        confluence_api_token: '',
+        productive_organization_id: '',
+        productive_api_token: ''
+      })
+      setCurrentStep(0)
     } catch (error) {
       console.error('Error creating project:', error)
       alert('Error creating project')

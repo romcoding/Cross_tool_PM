@@ -1,27 +1,40 @@
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Calendar, Users, DollarSign } from 'lucide-react'
+import { Button } from './ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Badge } from './ui/badge'
+import { Plus, Calendar, Users, DollarSign, BarChart3, TrendingUp, Eye } from 'lucide-react'
 import { format } from 'date-fns'
+import { api } from '../utils/api'
+import ProjectDetails from './ProjectDetails'
 
 export default function ProjectDashboard({ onCreateProject }) {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState(null)
+  const [selectedProject, setSelectedProject] = useState(null)
 
   useEffect(() => {
     fetchProjects()
+    fetchStats()
   }, [])
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects')
-      const data = await response.json()
+      const data = await api.getProjects()
       setProjects(data)
     } catch (error) {
       console.error('Error fetching projects:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      const data = await api.getDashboardStats()
+      setStats(data)
+    } catch (error) {
+      console.error('Error fetching stats:', error)
     }
   }
 
@@ -52,14 +65,75 @@ export default function ProjectDashboard({ onCreateProject }) {
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Project Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Project Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage and track your projects across multiple tools</p>
         </div>
-        <Button onClick={onCreateProject}>
+        <Button onClick={onCreateProject} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="mr-2 h-4 w-4" />
           New Project
         </Button>
       </div>
+
+      {/* Stats Overview */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Projects</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalProjects}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Active Projects</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Team Members</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalTeamMembers}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Calendar className="h-6 w-6 text-orange-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Upcoming Meetings</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.upcomingMeetings}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {projects.length === 0 ? (
         <Card>
@@ -115,7 +189,13 @@ export default function ProjectDashboard({ onCreateProject }) {
                 </div>
                 
                 <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setSelectedProject(project.id)}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
                     View Details
                   </Button>
                 </div>
@@ -123,6 +203,14 @@ export default function ProjectDashboard({ onCreateProject }) {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <ProjectDetails 
+          projectId={selectedProject} 
+          onBack={() => setSelectedProject(null)} 
+        />
       )}
     </div>
   )

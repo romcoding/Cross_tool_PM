@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ProjectDashboard from './components/ProjectDashboard'
 import ProjectWizard from './components/ProjectWizard'
-import './App.css'
+import './index.css'
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard') // 'dashboard' or 'wizard'
